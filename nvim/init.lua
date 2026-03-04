@@ -45,6 +45,9 @@ vim.opt.hlsearch = false
 -- Undo (persistent)
 vim.opt.undofile = true
 
+-- Sessions must keep localoptions so filetype/highlight restore correctly
+vim.o.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
+
 -- Clipboard
 vim.opt.clipboard = "unnamedplus"
 
@@ -84,6 +87,7 @@ map("n", "<leader>Y", '"+Y', { desc = "Yank line to system clipboard" })
 map({ "n", "v" }, "<leader>p", '"+p', { desc = "Paste from system clipboard" })
 map("n", "<leader>w", "<cmd>w<CR>", { desc = "Save" })
 map("n", "<leader>q", "<cmd>q<CR>", { desc = "Quit" })
+map("n", "<C-q>", "<cmd>q<CR>", { desc = "Close split" })
 
 
 -- Sessions (auto-session)
@@ -114,6 +118,7 @@ vim.api.nvim_create_autocmd("TermOpen", {
     vim.opt_local.buflisted = false
     vim.opt_local.number = false
     vim.opt_local.relativenumber = false
+    vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { buffer = 0, desc = "Exit terminal mode" })
   end,
 })
 -- =========================================================
@@ -163,10 +168,29 @@ require("lazy").setup({
     "stevearc/oil.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {
-      default_file_explorer = true, -- hace que Oil reemplace netrw
+      default_file_explorer = true,
       view_options = { show_hidden = true },
       keymaps = {
-        ["<CR>"] = "actions.select_vsplit", -- Enter abre en split derecha
+        ["<CR>"] = function()
+          local oil = require("oil")
+          local actions = require("oil.actions")
+          local entry = oil.get_cursor_entry()
+
+          if entry and entry.type == "directory" then
+            actions.select.callback()
+          else
+            actions.select_vsplit.callback()
+          end
+        end,
+
+        ["<C-v>"] = "actions.select_vsplit",
+        ["<C-s>"] = "actions.select_split",
+        ["R"] = "actions.refresh",
+
+        ["<C-h>"] = false,
+        ["<C-j>"] = false,
+        ["<C-k>"] = false,
+        ["<C-l>"] = false,
       },
     },
   },
@@ -204,7 +228,7 @@ require("lazy").setup({
       },
     },
     config = function(_, opts)
-      require("nvim-treesitter").setup(opts)
+      require("nvim-treesitter.configs").setup(opts)
     end,
   },
 
@@ -221,7 +245,7 @@ require("lazy").setup({
     event = "VeryLazy",
     opts = {},
   },
-
+  -- Autosession
   {
     "rmagatti/auto-session",
     opts = {
@@ -300,6 +324,109 @@ require("lazy").setup({
       { "<leader>F", function() require("conform").format({ lsp_fallback = true }) end, desc = "Format file" },
     },
   },
+
+  -- Copilot
+
+  {
+    "github/copilot.vim",
+    event = "InsertEnter",
+    cmd = "Copilot",
+    config = function()
+      vim.g.copilot_no_tab_map = false
+
+      vim.keymap.set("i", "<C-l>", 'copilot#Accept("\\<CR>")', {
+        expr = true,
+        replace_keycodes = false,
+        desc = "Copilot Accept",
+      })
+
+
+      vim.keymap.set("i", "<M-]>", "<Plug>(copilot-next)", {
+        desc = "Copilot Next",
+      })
+
+
+      vim.keymap.set("i", "<M-[>", "<Plug>(copilot-previous)", {
+        desc = "Copilot Previous",
+      })
+
+
+      vim.keymap.set("i", "<C-]>", "<Plug>(copilot-dismiss)", {
+        desc = "Copilot Dismiss",
+      })
+    end,
+  },
+
+  -- Git (Fugitive)
+  {
+    "tpope/vim-fugitive",
+    cmd = { "Git", "G", "Gdiffsplit", "Gvdiffsplit", "Gwrite", "Gread", "Gstatus", "Gblame" },
+    keys = {
+      { "<leader>gs", "<cmd>Git<CR>",        desc = "Git status (Fugitive)" },
+      { "<leader>gc", "<cmd>Git commit<CR>", desc = "Git commit (Fugitive)" },
+      { "<leader>gp", "<cmd>Git push<CR>",   desc = "Git push (Fugitive)" },
+      { "<leader>gl", "<cmd>Git pull<CR>",   desc = "Git pull (Fugitive)" },
+      { "<leader>gd", "<cmd>Gdiffsplit<CR>", desc = "Git diff (split)" },
+    },
+  },
+  -- Avante Cursor like
+
+  {
+    "yetone/avante.nvim",
+    event = "VeryLazy",
+    version = false,
+    build = vim.fn.has("win32") ~= 0
+        and "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"
+        or "make",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+
+      "stevearc/dressing.nvim", -- mejor UI para inputs
+      "nvim-tree/nvim-web-devicons",
+
+      {
+        "MeanderingProgrammer/render-markdown.nvim",
+        ft = { "markdown", "Avante" },
+        opts = { file_types = { "markdown", "Avante" } },
+      },
+
+      {
+        "HakonHarnes/img-clip.nvim",
+        event = "VeryLazy",
+        opts = {
+          default = {
+            embed_image_as_base64 = false,
+            prompt_for_file_name = false,
+            drag_and_drop = { insert_mode = true },
+            use_absolute_path = true,
+          },
+        },
+      },
+    },
+    opts = {
+      instructions_file = "avante.md",
+      provider = "openai",
+      repo_map = {
+        ignore_patterns = {
+          "%.git",
+          "node_modules",
+          "%.png$",
+          "%.jpe?g$",
+          "%.webp$",
+          "%.gif$",
+          "%.pdf$",
+          "%.zip$",
+          "%.gz$",
+          "%.tar$",
+        },
+      },
+
+      behaviour = {
+        enable_token_counting = true,
+      },
+    }
+  },
 })
 
 -- =========================================================
@@ -317,24 +444,6 @@ cmp.setup({
   mapping = cmp.mapping.preset.insert({
     ["<C-Space>"] = cmp.mapping.complete(),
     ["<CR>"] = cmp.mapping.confirm({ select = true }),
-    ["<Tab>"] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_next_item()
-      elseif luasnip.expand_or_jumpable() then
-        luasnip.expand_or_jump()
-      else
-        fallback()
-      end
-    end, { "i", "s" }),
-    ["<S-Tab>"] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
-        luasnip.jump(-1)
-      else
-        fallback()
-      end
-    end, { "i", "s" }),
   }),
   sources = cmp.config.sources({
     { name = "nvim_lsp" },
@@ -395,3 +504,41 @@ vim.api.nvim_create_user_command("ReloadConfig", function()
   dofile(vim.fn.stdpath("config") .. "/init.lua")
   vim.notify("Neovim config reloaded!", vim.log.levels.INFO)
 end, {})
+
+
+-- =========================================================
+-- Oil image preview using terminal
+-- =========================================================
+local function oil_is_visible()
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].filetype == "oil" then
+      return true
+    end
+  end
+  return false
+end
+
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = { "*.png", "*.jpg", "*.jpeg", "*.webp", "*.gif" },
+  callback = function(ev)
+    if not oil_is_visible() then return end
+
+    local file = vim.api.nvim_buf_get_name(ev.buf)
+    if file == "" then return end
+
+    -- cerrar el buffer actual
+    vim.cmd("bd!")
+
+    -- abrir split derecho con terminal
+    vim.cmd("vsplit")
+    vim.cmd("terminal chafa " .. vim.fn.shellescape(file))
+
+    -- opciones visuales
+    vim.opt_local.number = false
+    vim.opt_local.relativenumber = false
+
+    -- salir automáticamente del modo insert del terminal
+    vim.cmd("stopinsert")
+  end,
+})
