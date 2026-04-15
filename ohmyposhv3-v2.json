@@ -1,0 +1,84 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 4,
+  "final_space": true,
+  "console_title": true,
+  "console_title_style": "folder",
+  "blocks": [
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "path",
+          "style": "diamond",
+          "powerline_symbol": "",
+          "foreground": "#ffffff",
+          "background": "#ff479c",
+          "leading_diamond": "",
+          "trailing_diamond": "",
+          "template": "  {{ .Path }} ",
+          "options": {
+            "style": "folder"
+          }
+        },
+        {
+          "type": "git",
+          "style": "powerline",
+          "powerline_symbol": "",
+          "foreground": "#193549",
+          "background": "#fffb38",
+          "options": {
+            "display_status": true,
+            "display_stash_count": true,
+            "display_upstream_icon": true
+          }
+        },
+        {
+          "type": "python",
+          "style": "powerline",
+          "powerline_symbol": "",
+          "foreground": "#ffffff",
+          "background": "#3572A5",
+          "template": "  {{ .Venv }} ",
+          "properties": {
+            "display_virtual_env": true,
+            "display_version": false
+          }
+        },
+        {
+          "type": "dotnet",
+          "style": "powerline",
+          "powerline_symbol": "",
+          "foreground": "#ffffff",
+          "background": "#6CA35E",
+          "template": "  {{ .Full }} ",
+          "options": {
+            "display_version": true
+          }
+        },
+        {
+          "type": "root",
+          "style": "powerline",
+          "powerline_symbol": "",
+          "foreground": "#ffffff",
+          "background": "#ffff66"
+        },
+        {
+          "type": "status",
+          "style": "powerline",
+          "powerline_symbol": "",
+          "foreground": "#ffffff",
+          "background": "#2e9599",
+          "trailing_diamond": "",
+          "template": "  ",
+          "options": {
+            "always_enabled": true,
+            "color_background": true,
+            "display_exit_code": false
+          }
+        }
+      ]
+    }
+  ]
+}
